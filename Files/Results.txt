@@ -1,0 +1,252 @@
+=== UNDER-SCHEDULED TEAMS (11) ===
+Stoughton7: Home=1, Away=4, Byes=1, Total=6
+Stoughton8: Home=1, Away=4, Byes=1, Total=6
+WaunakeePurple7: Home=3, Away=2, Byes=1, Total=6
+Oregon7: Home=4, Away=2, Byes=1, Total=7
+VeronaOrange7: Home=2, Away=4, Byes=1, Total=7
+VeronaOrange8: Home=2, Away=4, Byes=1, Total=7
+Lodi8: Home=3, Away=3, Byes=1, Total=7
+MiddleRed7: Home=3, Away=3, Byes=1, Total=7
+MiddleWhite8: Home=2, Away=4, Byes=1, Total=7
+MononaGBlue7: Home=4, Away=2, Byes=1, Total=7
+SunPrWest8: Home=4, Away=2, Byes=1, Total=7
+
+=== GAME SUMMARY BY TEAM ===
+BeaverD7: Home=3, Away=4, Byes=1, Total=8
+BeaverD8: Home=3, Away=4, Byes=1, Total=8
+Lodi7: Home=3, Away=4, Byes=1, Total=8
+Lodi8: Home=3, Away=3, Byes=1, Total=7
+MiddleRed7: Home=3, Away=3, Byes=1, Total=7
+MiddleRed8: Home=4, Away=3, Byes=1, Total=8
+MiddleWhite7: Home=4, Away=3, Byes=1, Total=8
+MiddleWhite8: Home=2, Away=4, Byes=1, Total=7
+Milton7: Home=4, Away=3, Byes=1, Total=8
+Milton8: Home=4, Away=3, Byes=1, Total=8
+MononaG8: Home=4, Away=3, Byes=1, Total=8
+MononaGBlue7: Home=4, Away=2, Byes=1, Total=7
+MononaGWhite7: Home=4, Away=3, Byes=1, Total=8
+MtHoreb7Red: Home=4, Away=3, Byes=1, Total=8
+MtHoreb7White: Home=4, Away=3, Byes=1, Total=8
+MtHoreb8Red: Home=4, Away=3, Byes=1, Total=8
+Oregon7: Home=4, Away=2, Byes=1, Total=7
+Oregon8: Home=4, Away=3, Byes=1, Total=8
+Portage7: Home=3, Away=4, Byes=1, Total=8
+Portage8: Home=3, Away=4, Byes=1, Total=8
+Reedsburg7: Home=3, Away=4, Byes=1, Total=8
+Reedsburg8: Home=4, Away=3, Byes=1, Total=8
+SaukPr7: Home=3, Away=4, Byes=1, Total=8
+SaukPr8: Home=4, Away=3, Byes=1, Total=8
+Stoughton7: Home=1, Away=4, Byes=1, Total=6
+Stoughton8: Home=1, Away=4, Byes=1, Total=6
+SunPrEastRed7: Home=4, Away=3, Byes=1, Total=8
+SunPrEastRed8: Home=4, Away=3, Byes=1, Total=8
+SunPrWest7: Home=3, Away=4, Byes=1, Total=8
+SunPrWest8: Home=4, Away=2, Byes=1, Total=7
+VeronaBlack7: Home=3, Away=4, Byes=1, Total=8
+VeronaBlack8: Home=3, Away=4, Byes=1, Total=8
+VeronaOrange7: Home=2, Away=4, Byes=1, Total=7
+VeronaOrange8: Home=2, Away=4, Byes=1, Total=7
+WaunakeePurple7: Home=3, Away=2, Byes=1, Total=6
+WaunakeePurple8: Home=3, Away=4, Byes=1, Total=8
+WaunakeeWhite7: Home=4, Away=3, Byes=1, Total=8
+WaunakeeWhite8: Home=4, Away=3, Byes=1, Total=8
+
+=== GAMES AND BYES BY WEEK AND DIVISION ===
+
+Week 1:
+  7: 10 games, 0 byes
+  8: 9 games, 0 byes
+
+Week 2:
+  7: 9 games, 0 byes
+  8: 9 games, 0 byes
+
+Week 3:
+  7: 8 games, 4 byes
+  8: 6 games, 4 byes
+
+Week 4:
+  7: 7 games, 5 byes
+  8: 8 games, 2 byes
+
+Week 5:
+  7: 7 games, 6 byes
+  8: 7 games, 4 byes
+
+Week 6:
+  7: 8 games, 3 byes
+  8: 7 games, 3 byes
+
+Week 7:
+  7: 9 games, 2 byes
+  8: 6 games, 5 byes
+
+Week 8:
+  7: 8 games, 0 byes
+  8: 8 games, 0 byes
+
+=== SCHEDULED GAMES ===
+Game 1: VeronaBlack7 vs Milton7 on 08/23/2025 (Week 1)
+Game 2: VeronaOrange7 vs MtHoreb7Red on 08/23/2025 (Week 1)
+Game 3: VeronaBlack8 vs Milton8 on 08/23/2025 (Week 1)
+Game 4: VeronaOrange8 vs MtHoreb8Red on 08/23/2025 (Week 1)
+Game 7: MiddleWhite7 vs MononaGBlue7 on 08/25/2025 (Week 1)
+Game 8: MiddleRed7 vs MononaGWhite7 on 08/25/2025 (Week 1)
+Game 9: MononaG8 vs WaunakeePurple8 on 08/25/2025 (Week 1)
+Game 10: MtHoreb7White vs BeaverD7 on 08/25/2025 (Week 1)
+Game 11: Oregon8 vs SunPrWest8 on 08/25/2025 (Week 1)
+Game 12: Oregon7 vs SunPrWest7 on 08/25/2025 (Week 1)
+Game 13: Portage7 vs Lodi7 on 08/25/2025 (Week 1)
+Game 14: Portage8 vs Lodi8 on 08/25/2025 (Week 1)
+Game 15: Reedsburg8 vs WaunakeeWhite8 on 08/25/2025 (Week 1)
+Game 16: Reedsburg7 vs WaunakeePurple7 on 08/25/2025 (Week 1)
+Game 17: SaukPr8 vs MiddleWhite8 on 08/25/2025 (Week 1)
+Game 18: SaukPr7 vs SunPrEastRed7 on 08/25/2025 (Week 1)
+Game 19: SunPrEastRed8 vs BeaverD8 on 08/25/2025 (Week 1)
+Game 20: WaunakeeWhite7 vs Stoughton7 on 08/25/2025 (Week 1)
+Game 21: MiddleRed8 vs Stoughton8 on 08/26/2025 (Week 1)
+Game 22: Lodi8 vs MtHoreb8Red on 09/02/2025 (Week 2)
+Game 23: Lodi7 vs MtHoreb7Red on 09/02/2025 (Week 2)
+Game 24: MiddleWhite7 vs MtHoreb7White on 09/02/2025 (Week 2)
+Game 25: Milton8 vs WaunakeeWhite8 on 09/02/2025 (Week 2)
+Game 26: Milton7 vs WaunakeeWhite7 on 09/02/2025 (Week 2)
+Game 27: MononaGBlue7 vs SunPrEastRed7 on 09/02/2025 (Week 2)
+Game 28: MononaG8 vs SunPrEastRed8 on 09/02/2025 (Week 2)
+Game 29: MononaGWhite7 vs SunPrWest7 on 09/02/2025 (Week 2)
+Game 30: Oregon7 vs Stoughton7 on 09/02/2025 (Week 2)
+Game 31: Oregon8 vs Stoughton8 on 09/02/2025 (Week 2)
+Game 32: SaukPr7 vs Portage7 on 09/02/2025 (Week 2)
+Game 33: SaukPr8 vs Portage8 on 09/02/2025 (Week 2)
+Game 34: VeronaOrange8 vs WaunakeePurple8 on 09/02/2025 (Week 2)
+Game 35: VeronaBlack7 vs BeaverD7 on 09/02/2025 (Week 2)
+Game 36: VeronaBlack8 vs BeaverD8 on 09/02/2025 (Week 2)
+Game 37: Reedsburg7 vs VeronaOrange7 on 09/03/2025 (Week 2)
+Game 38: Reedsburg8 vs MiddleWhite8 on 09/03/2025 (Week 2)
+Game 39: SunPrWest8 vs MiddleRed8 on 09/03/2025 (Week 2)
+Game 40: MiddleWhite7 vs bye on 09/08/2025 (Week 3)
+Game 41: Milton7 vs VeronaOrange7 on 09/08/2025 (Week 3)
+Game 42: Milton8 vs VeronaOrange8 on 09/08/2025 (Week 3)
+Game 43: MononaG8 vs bye on 09/08/2025 (Week 3)
+Game 44: MononaGBlue7 vs WaunakeeWhite7 on 09/08/2025 (Week 3)
+Game 45: MononaGWhite7 vs WaunakeePurple7 on 09/08/2025 (Week 3)
+Game 46: MtHoreb7Red vs SaukPr7 on 09/08/2025 (Week 3)
+Game 47: MtHoreb8Red vs SaukPr8 on 09/08/2025 (Week 3)
+Game 48: Oregon7 vs bye on 09/08/2025 (Week 3)
+Game 49: Oregon8 vs bye on 09/08/2025 (Week 3)
+Game 50: Reedsburg7 vs bye on 09/08/2025 (Week 3)
+Game 51: Reedsburg8 vs bye on 09/08/2025 (Week 3)
+Game 52: SunPrEastRed8 vs bye on 09/08/2025 (Week 3)
+Game 53: SunPrEastRed7 vs Stoughton7 on 09/08/2025 (Week 3)
+Game 54: SunPrWest7 vs VeronaBlack7 on 09/08/2025 (Week 3)
+Game 55: SunPrWest8 vs VeronaBlack8 on 09/08/2025 (Week 3)
+Game 56: WaunakeeWhite8 vs Stoughton8 on 09/08/2025 (Week 3)
+Game 57: WaunakeePurple8 vs BeaverD8 on 09/08/2025 (Week 3)
+Game 161: BeaverD7 vs bye on 09/08/2025 (Week 3)
+Game 58: MiddleRed7 vs Portage7 on 09/09/2025 (Week 3)
+Game 59: MiddleRed8 vs Portage8 on 09/09/2025 (Week 3)
+Game 60: MtHoreb7White vs Lodi7 on 09/09/2025 (Week 3)
+Game 5: SunPrEastRed7 vs SunPrWest7 on 09/15/2025 (Week 4)
+Game 6: SunPrEastRed8 vs SunPrWest8 on 09/15/2025 (Week 4)
+Game 61: Lodi8 vs Milton8 on 09/15/2025 (Week 4)
+Game 62: Lodi7 vs Milton7 on 09/15/2025 (Week 4)
+Game 63: MiddleRed7 vs bye on 09/15/2025 (Week 4)
+Game 64: MiddleRed8 vs bye on 09/15/2025 (Week 4)
+Game 65: MononaGBlue7 vs bye on 09/15/2025 (Week 4)
+Game 66: MononaGWhite7 vs bye on 09/15/2025 (Week 4)
+Game 67: MononaG8 vs Reedsburg8 on 09/15/2025 (Week 4)
+Game 68: MtHoreb7White vs bye on 09/15/2025 (Week 4)
+Game 69: Oregon8 vs VeronaBlack8 on 09/15/2025 (Week 4)
+Game 70: Oregon7 vs VeronaBlack7 on 09/15/2025 (Week 4)
+Game 71: WaunakeeWhite8 vs MiddleWhite8 on 09/15/2025 (Week 4)
+Game 72: WaunakeeWhite7 vs VeronaOrange7 on 09/15/2025 (Week 4)
+Game 73: WaunakeePurple8 vs VeronaOrange8 on 09/15/2025 (Week 4)
+Game 74: MiddleWhite7 vs BeaverD7 on 09/16/2025 (Week 4)
+Game 75: MtHoreb7Red vs Stoughton7 on 09/16/2025 (Week 4)
+Game 76: MtHoreb8Red vs Stoughton8 on 09/16/2025 (Week 4)
+Game 77: Portage7 vs Reedsburg7 on 09/16/2025 (Week 4)
+Game 78: Portage8 vs BeaverD8 on 09/16/2025 (Week 4)
+Game 79: SaukPr7 vs bye on 09/16/2025 (Week 4)
+Game 80: SaukPr8 vs bye on 09/16/2025 (Week 4)
+Game 81: MiddleWhite7 vs Lodi7 on 09/22/2025 (Week 5)
+Game 82: Milton7 vs bye on 09/22/2025 (Week 5)
+Game 83: Milton8 vs bye on 09/22/2025 (Week 5)
+Game 84: MononaG8 vs VeronaOrange8 on 09/22/2025 (Week 5)
+Game 85: MononaGWhite7 vs VeronaOrange7 on 09/22/2025 (Week 5)
+Game 86: MononaGBlue7 vs MiddleRed7 on 09/22/2025 (Week 5)
+Game 87: MtHoreb7Red vs bye on 09/22/2025 (Week 5)
+Game 88: MtHoreb8Red vs bye on 09/22/2025 (Week 5)
+Game 89: Oregon8 vs Portage8 on 09/22/2025 (Week 5)
+Game 90: Oregon7 vs Portage7 on 09/22/2025 (Week 5)
+Game 91: SunPrEastRed7 vs bye on 09/22/2025 (Week 5)
+Game 92: SunPrEastRed8 vs VeronaBlack8 on 09/22/2025 (Week 5)
+Game 93: SunPrWest8 vs bye on 09/22/2025 (Week 5)
+Game 94: VeronaBlack7 vs bye on 09/22/2025 (Week 5)
+Game 95: WaunakeeWhite7 vs bye on 09/22/2025 (Week 5)
+Game 96: WaunakeePurple7 vs SunPrWest7 on 09/22/2025 (Week 5)
+Game 162: Stoughton7 vs bye on 09/22/2025 (Week 5)
+Game 163: Stoughton8 vs bye on 09/22/2025 (Week 5)
+Game 97: BeaverD8 vs WaunakeeWhite8 on 09/23/2025 (Week 5)
+Game 98: BeaverD7 vs Reedsburg7 on 09/23/2025 (Week 5)
+Game 99: MiddleWhite8 vs WaunakeePurple8 on 09/23/2025 (Week 5)
+Game 100: MtHoreb7White vs SaukPr7 on 09/23/2025 (Week 5)
+Game 101: Reedsburg8 vs MiddleRed8 on 09/23/2025 (Week 5)
+Game 102: SaukPr8 vs Lodi8 on 09/23/2025 (Week 5)
+Game 103: Lodi8 vs bye on 09/29/2025 (Week 6)
+Game 104: Lodi7 vs bye on 09/29/2025 (Week 6)
+Game 105: MiddleRed7 vs Reedsburg7 on 09/29/2025 (Week 6)
+Game 106: MiddleWhite8 vs Reedsburg8 on 09/29/2025 (Week 6)
+Game 107: Milton8 vs MononaG8 on 09/29/2025 (Week 6)
+Game 108: Milton7 vs MononaGBlue7 on 09/29/2025 (Week 6)
+Game 109: MononaGWhite7 vs MiddleWhite7 on 09/29/2025 (Week 6)
+Game 110: MtHoreb7Red vs VeronaBlack7 on 09/29/2025 (Week 6)
+Game 111: SunPrEastRed7 vs WaunakeeWhite7 on 09/29/2025 (Week 6)
+Game 112: SunPrEastRed8 vs WaunakeePurple8 on 09/29/2025 (Week 6)
+Game 113: SunPrWest8 vs VeronaOrange8 on 09/29/2025 (Week 6)
+Game 114: WaunakeeWhite8 vs bye on 09/29/2025 (Week 6)
+Game 115: WaunakeePurple7 vs MtHoreb7White on 09/29/2025 (Week 6)
+Game 164: SunPrWest7 vs bye on 09/29/2025 (Week 6)
+Game 116: BeaverD8 vs MtHoreb8Red on 09/30/2025 (Week 6)
+Game 117: BeaverD7 vs SaukPr7 on 09/30/2025 (Week 6)
+Game 118: MiddleRed8 vs Oregon8 on 09/30/2025 (Week 6)
+Game 119: Portage7 vs bye on 09/30/2025 (Week 6)
+Game 120: Portage8 vs bye on 09/30/2025 (Week 6)
+Game 121: SaukPr8 vs VeronaBlack8 on 09/30/2025 (Week 6)
+Game 122: VeronaOrange7 vs Oregon7 on 09/30/2025 (Week 6)
+Game 123: MiddleWhite8 vs bye on 10/06/2025 (Week 7)
+Game 124: Milton8 vs MiddleRed8 on 10/06/2025 (Week 7)
+Game 125: Milton7 vs MiddleWhite7 on 10/06/2025 (Week 7)
+Game 126: MononaGBlue7 vs VeronaBlack7 on 10/06/2025 (Week 7)
+Game 127: MtHoreb8Red vs MononaG8 on 10/06/2025 (Week 7)
+Game 128: MtHoreb7Red vs MononaGWhite7 on 10/06/2025 (Week 7)
+Game 129: SunPrEastRed7 vs BeaverD7 on 10/06/2025 (Week 7)
+Game 130: SunPrWest7 vs MiddleRed7 on 10/06/2025 (Week 7)
+Game 131: VeronaOrange7 vs bye on 10/06/2025 (Week 7)
+Game 132: VeronaBlack8 vs bye on 10/06/2025 (Week 7)
+Game 133: VeronaOrange8 vs bye on 10/06/2025 (Week 7)
+Game 134: WaunakeePurple7 vs bye on 10/06/2025 (Week 7)
+Game 135: WaunakeePurple8 vs bye on 10/06/2025 (Week 7)
+Game 136: WaunakeeWhite8 vs Oregon8 on 10/06/2025 (Week 7)
+Game 137: WaunakeeWhite7 vs Oregon7 on 10/06/2025 (Week 7)
+Game 138: BeaverD8 vs bye on 10/07/2025 (Week 7)
+Game 139: Lodi7 vs SaukPr7 on 10/07/2025 (Week 7)
+Game 140: Lodi8 vs SaukPr8 on 10/07/2025 (Week 7)
+Game 141: MtHoreb7White vs Portage7 on 10/07/2025 (Week 7)
+Game 142: Portage8 vs Reedsburg8 on 10/07/2025 (Week 7)
+Game 143: Stoughton8 vs SunPrEastRed8 on 10/08/2025 (Week 7)
+Game 144: Stoughton7 vs Reedsburg7 on 10/08/2025 (Week 7)
+Game 145: MiddleRed8 vs SaukPr8 on 10/13/2025 (Week 8)
+Game 146: MtHoreb8Red vs Portage8 on 10/13/2025 (Week 8)
+Game 147: SunPrWest8 vs MiddleWhite8 on 10/13/2025 (Week 8)
+Game 148: SunPrWest7 vs MiddleRed7 on 10/13/2025 (Week 8)
+Game 149: WaunakeePurple8 vs Milton8 on 10/13/2025 (Week 8)
+Game 150: WaunakeePurple7 vs Milton7 on 10/13/2025 (Week 8)
+Game 151: WaunakeeWhite7 vs Lodi7 on 10/13/2025 (Week 8)
+Game 152: WaunakeeWhite8 vs Lodi8 on 10/13/2025 (Week 8)
+Game 153: BeaverD7 vs MtHoreb7Red on 10/14/2025 (Week 8)
+Game 154: BeaverD8 vs Oregon8 on 10/14/2025 (Week 8)
+Game 155: Portage7 vs MiddleWhite7 on 10/14/2025 (Week 8)
+Game 156: Reedsburg7 vs MtHoreb7White on 10/14/2025 (Week 8)
+Game 157: Reedsburg8 vs SunPrEastRed8 on 10/14/2025 (Week 8)
+Game 158: SaukPr7 vs MononaGWhite7 on 10/14/2025 (Week 8)
+Game 159: VeronaBlack7 vs SunPrEastRed7 on 10/14/2025 (Week 8)
+Game 160: VeronaBlack8 vs MononaG8 on 10/14/2025 (Week 8)

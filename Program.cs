@@ -20,15 +20,31 @@ namespace BatchProcessor
         
         static void ProcessBatch()
         {
+            // Setup file logging
+            var logPath = @"C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\Files\log.txt";
+            using var logWriter = new StreamWriter(logPath, false); // false = overwrite
+            
+            void Log(string message)
+            {
+                Console.WriteLine(message);
+                logWriter.WriteLine(message);
+                logWriter.Flush();
+            }
+            
             var teams = Team.Initialize();
             var weekDefinitions = WeekDefinitions.Initialize();
             var siteAvailability = SiteAvailability.LoadFromCsv(@"C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\Files\Cleaned_Home_Hosting_Availability.csv");
             var teamAvailability = TeamAvailability.LoadFromCsv(@"C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\Files\Away_Availability.csv", teams);
             
-            Console.WriteLine($"Loaded {teams.Count} teams");
-            Console.WriteLine($"Loaded {weekDefinitions.Count} week definitions");
-            Console.WriteLine($"Loaded {siteAvailability.Count} site availability records");
-            Console.WriteLine($"Loaded {teamAvailability.Count} team availability records");
+            Log($"Loaded {teams.Count} teams");
+            Log($"Loaded {weekDefinitions.Count} week definitions");
+            Log($"Loaded {siteAvailability.Count} site availability records");
+            Log($"Loaded {teamAvailability.Count} team availability records");
+            
+            // Track bye assignments per week (weeks 2-7, max 8 teams per week)
+            var byeCountByWeek = new Dictionary<int, int>();
+            for (int week = 2; week <= 7; week++)
+                byeCountByWeek[week] = 0;
             
             var schedule = Create823Schedule(teams, weekDefinitions, siteAvailability, teamAvailability);            
             schedule.AddRange(CreateSPRivalryWeekSchedule(teams, weekDefinitions, siteAvailability, teamAvailability, schedule.Count + 1));
@@ -37,7 +53,7 @@ namespace BatchProcessor
             int nextGameNumber = schedule.Count + 1;
             foreach (var site in siteAvailability.OrderBy(s => s.Date).ThenBy(s => s.School))
             {
-                var newGames = AssignGamesForDate(teams, weekDefinitions, teamAvailability, siteAvailability, site, nextGameNumber, schedule);
+                var newGames = AssignGamesForDate(teams, weekDefinitions, teamAvailability, siteAvailability, site, nextGameNumber, schedule, byeCountByWeek, Log);
                 schedule.AddRange(newGames);
                 nextGameNumber += newGames.Count;
             }
@@ -51,7 +67,7 @@ namespace BatchProcessor
             //nextGameNumber = schedule.Count + 1;
             //var unusedSlotGames = UseUnusedHostingSlots(teams, weekDefinitions, siteAvailability, teamAvailability, schedule, nextGameNumber);
             //schedule.AddRange(unusedSlotGames);
-            Console.WriteLine($"Created schedule with {schedule.Count} games");
+            Log($"Created schedule with {schedule.Count} games");
             
             // Final step: Assign bye weeks to teams that still need them
             nextGameNumber = schedule.Count + 1;
@@ -80,10 +96,10 @@ namespace BatchProcessor
             var underScheduledTeams = teams.Where(t => (t.HomeGames + t.AwayGames + t.Byes) < 8).ToList();
             if (underScheduledTeams.Any())
             {
-                Console.WriteLine($"\n=== UNDER-SCHEDULED TEAMS ({underScheduledTeams.Count}) ===");
+                Log($"\n=== UNDER-SCHEDULED TEAMS ({underScheduledTeams.Count}) ===");
                 foreach (var team in underScheduledTeams.OrderBy(t => t.HomeGames + t.AwayGames + t.Byes))
                 {
-                    Console.WriteLine($"{team.Name}: Home={team.HomeGames}, Away={team.AwayGames}, Byes={team.Byes}, Total={team.HomeGames + team.AwayGames + team.Byes}");
+                    Log($"{team.Name}: Home={team.HomeGames}, Away={team.AwayGames}, Byes={team.Byes}, Total={team.HomeGames + team.AwayGames + team.Byes}");
                 }
             }
             
@@ -96,9 +112,9 @@ namespace BatchProcessor
                 Console.WriteLine($"Game {game.GameNumber}: {game.HostTeam} vs {game.AwayTeam} on {game.Date:MM/dd/yyyy} (Week {game.WeekNumber})");
             }*/
             
-            DisplayGameSummary(teams, schedule);
+            DisplayGameSummary(teams, schedule, Log);
             
-            Console.WriteLine("Processing batch...");
+            Log("Processing batch...");
         }
         
         static List<Schedule> Create823Schedule(List<Team> teams, List<WeekDefinitions> weekDefinitions, List<SiteAvailability> siteAvailability, List<TeamAvailability> teamAvailability)
@@ -238,22 +254,25 @@ namespace BatchProcessor
             return schedule;
         }
         
-        static List<Schedule> AssignGamesForDate(List<Team> teams, List<WeekDefinitions> weekDefinitions, List<TeamAvailability> teamAvailability, List<SiteAvailability> siteAvailability, SiteAvailability site, int startingGameNumber, List<Schedule> existingSchedule = null)
+        static List<Schedule> AssignGamesForDate(List<Team> teams, List<WeekDefinitions> weekDefinitions, List<TeamAvailability> teamAvailability, List<SiteAvailability> siteAvailability, SiteAvailability site, int startingGameNumber, List<Schedule> existingSchedule = null, Dictionary<int, int> byeCountByWeek = null, Action<string> log = null)
         {
             var schedule = new List<Schedule>();
-
-            // Skip if site is already taken
-            if (site.SlotTaken)
+            if (site.School == "Sun P West")
             {
-                Console.WriteLine($"AssignGamesForDate: {site.School} on {site.Date:MM/dd/yyyy} - site already taken");
-                return schedule;
+
             }
+            // Skip if site is already taken
+                if (site.SlotTaken)
+                {
+                    log?.Invoke($"AssignGamesForDate: {site.School} on {site.Date:MM/dd/yyyy} - site already taken");
+                    return schedule;
+                }
 
             // Get week number for this date
             var weekNumber = weekDefinitions.FirstOrDefault(w => w.Date == site.Date)?.WeekNumber ?? 0;
             if (weekNumber == 0)
             {
-                Console.WriteLine($"AssignGamesForDate: {site.School} on {site.Date:MM/dd/yyyy} - no week number found");
+                log?.Invoke($"AssignGamesForDate: {site.School} on {site.Date:MM/dd/yyyy} - no week number found");
                 return schedule;
             }
             
@@ -267,24 +286,83 @@ namespace BatchProcessor
                 // Check if teams from this school were already scheduled this week
                 var schoolTeamsThisWeek = teams.Where(t => t.School == site.School &&
                     existingSchedule != null && existingSchedule.Any(g => g.WeekNumber == weekNumber && (g.HostTeam == t.Name || g.AwayTeam == t.Name))).ToList();
-                
+
                 if (schoolTeamsThisWeek.Any())
                 {
+                    // Don't need this message at the moment, I get why this is happening.
+                    /*
                     var scheduledGames = existingSchedule.Where(g => g.WeekNumber == weekNumber && 
                         schoolTeamsThisWeek.Any(t => g.HostTeam == t.Name || g.AwayTeam == t.Name)).ToList();
                     foreach (var game in scheduledGames)
                     {
                         Console.WriteLine($"AssignGamesForDate: {site.School} team already scheduled - {game.HostTeam} vs {game.AwayTeam}");
                     }
+                    */
                 }
                 else
                 {
-                    Console.WriteLine($"AssignGamesForDate: {site.School} on {site.Date:MM/dd/yyyy} - no eligible host teams");
+                    log?.Invoke($"AssignGamesForDate: {site.School} on {site.Date:MM/dd/yyyy} - no eligible host teams");
+
+                    // Debug: Show why no host teams are eligible
+                    var allSchoolTeams = teams.Where(t => t.School == site.School).ToList();
+                    log?.Invoke($"  Total teams at {site.School}: {allSchoolTeams.Count}");
+
+                    var teamsAtHomeLimit = allSchoolTeams.Where(t => t.HomeGames >= 4).ToList();
+                    log?.Invoke($"  Teams at home game limit (4+): {teamsAtHomeLimit.Count}");
+
+                    var teamsAtTotalLimit = allSchoolTeams.Where(t => (t.HomeGames + t.AwayGames) >= 7).ToList();
+                    log?.Invoke($"  Teams at total game limit (7+): {teamsAtTotalLimit.Count}");
+
+                    foreach (var team in allSchoolTeams)
+                    {
+                        var reasons = new List<string>();
+                        if (team.HomeGames >= 4) reasons.Add($"HomeGames={team.HomeGames}");
+                        if ((team.HomeGames + team.AwayGames) >= 7) reasons.Add($"TotalGames={team.HomeGames + team.AwayGames}");
+                        if (existingSchedule != null && existingSchedule.Any(g => g.WeekNumber == weekNumber && (g.HostTeam == team.Name || g.AwayTeam == team.Name)))
+                            reasons.Add($"AlreadyPlayedWeek{weekNumber}");
+
+                        log?.Invoke($"    {team.Name}: {(reasons.Any() ? string.Join(", ", reasons) : "ELIGIBLE")}");
+                    }
                 }
                 return schedule;
             }
             
-            // Randomly shuffle hostTeams to add variability
+
+            // Check for teams with 2+ home games that need byes (weeks 3-7 only)
+            if (byeCountByWeek != null && weekNumber >= 3 && weekNumber <= 7 && byeCountByWeek[weekNumber] < 8)
+            {
+                var teamsNeedingByes = hostTeams.Where(t => 
+                    t.HomeGames >= 2 && 
+                    t.Byes == 0 &&
+                    (existingSchedule == null || !existingSchedule.Any(g => g.WeekNumber == weekNumber && (g.HostTeam == t.Name || g.AwayTeam == t.Name)))
+                ).OrderBy(t => t.HomeGames + t.AwayGames).ToList();
+                
+                int byesAvailable = 8 - byeCountByWeek[weekNumber];
+                foreach (var team in teamsNeedingByes.Take(byesAvailable))
+                {
+                    schedule.Add(new Schedule
+                    {
+                        GameNumber = startingGameNumber++,
+                        HostTeam = team.Name,
+                        AwayTeam = "bye",
+                        Date = site.Date,
+                        WeekNumber = weekNumber
+                    });
+                    team.Byes += 1;
+                    byeCountByWeek[weekNumber]++;
+                    hostTeams.Remove(team); // Remove from host candidates since they got a bye
+                    log?.Invoke($"Bye assigned to team with 2+ home games: {team.Name} on {site.Date:MM/dd/yyyy} (Week {weekNumber})");
+                }
+            }
+            
+            // If a bye was created, return.  Don't block the site off this week though.
+            if (schedule.Any())
+            {
+                //site.SlotTaken = schedule.Any(); // Mark site as taken if any byes were assigned
+                return schedule;
+            }
+            
+            // Randomly shuffle remaining hostTeams to add variability
             var random = new Random();
             hostTeams = hostTeams.OrderBy(x => random.Next()).ToList();
             
@@ -300,14 +378,19 @@ namespace BatchProcessor
                 // First priority: teams that cannot host this week (no available hosting slots)
                 siteAvailability.Any(s => s.School == t.School && s.Date == site.Date && !s.SlotTaken) ? 1 : 0
             ).ThenBy(t => t.HomeGames + t.AwayGames).ThenBy(t => t.AwayGames).ToList();
-            
+
+            var before = availableAwayTeams.Count();
+            // Remove away teams that have the same school as any host team
+            var hostSchools = hostTeams.Select(h => h.School).Distinct().ToList();
+            availableAwayTeams = availableAwayTeams.Where(a => !hostSchools.Contains(a.School)).ToList();
+
             // Randomly shuffle hostTeams to add variability
             availableAwayTeams = availableAwayTeams.OrderBy(x => random.Next()).ToList();
             
             // If no away teams available, skip this site for now (don't create byes immediately)
             if (!availableAwayTeams.Any())
             {
-                Console.WriteLine($"AssignGamesForDate: {site.School} on {site.Date:MM/dd/yyyy} - no eligible away teams");
+                log?.Invoke($"AssignGamesForDate: {site.School} on {site.Date:MM/dd/yyyy} - no eligible away teams");
 
                 return schedule;
             }
@@ -319,7 +402,11 @@ namespace BatchProcessor
             {
                 var matchingAwayTeam = availableAwayTeams.FirstOrDefault(a => 
                     a.Division == hostTeam.Division && 
-                    !schedule.Any(g => g.AwayTeam == a.Name)
+                    !schedule.Any(g => g.AwayTeam == a.Name) &&
+                    // Prevent teams from playing each other multiple times
+                    (existingSchedule == null || !existingSchedule.Any(g => 
+                        (g.HostTeam == hostTeam.Name && g.AwayTeam == a.Name) ||
+                        (g.HostTeam == a.Name && g.AwayTeam == hostTeam.Name)))
                 );
 
                 if (matchingAwayTeam != null)
@@ -358,15 +445,13 @@ namespace BatchProcessor
                             Date = site.Date,
                             WeekNumber = weekNumber
                         });
-                        Console.WriteLine($"Second game created: {secondHostTeam.Name} vs {secondAwayTeam.Name} on {site.Date:MM/dd/yyyy}");
+                        log?.Invoke($"Second game created: {secondHostTeam.Name} vs {secondAwayTeam.Name} on {site.Date:MM/dd/yyyy}");
                     }
                     
                     
                     break;
                 }
             }
-
-
             
             // Update data if games were created
             if (schedule.Any())
@@ -400,24 +485,60 @@ namespace BatchProcessor
             {
                 Console.WriteLine($"AssignGamesForDate: No games created for {site.School} on {site.Date:MM/dd/yyyy} - no suitable matchups found");
             }
-            
+            foreach (var game in schedule.Where(t=> t.AwayTeam != "bye"))
+            {
+                var hostTeam = teams.FirstOrDefault(t => t.Name == game.HostTeam);
+                var awayTeam = teams.FirstOrDefault(t => t.Name == game.AwayTeam);
+                if (hostTeam.School == awayTeam.School)
+                {
+                    Console.WriteLine($"AssignGamesForDate: {site.School} cannot play same school!");
+                }
+            }
             return schedule;
         }
-        
-        static void DisplayGameSummary(List<Team> teams, List<Schedule> schedule)
+
+        static void DisplayGameSummary(List<Team> teams, List<Schedule> schedule, Action<string> log)
         {
-            Console.WriteLine("\n=== GAME SUMMARY BY TEAM ===");
-            
+            log("\n=== GAME SUMMARY BY TEAM ===");
+
             foreach (var team in teams.OrderBy(t => t.School).ThenBy(t => t.Name))
             {
-                Console.WriteLine($"{team.Name}: Home={team.HomeGames}, Away={team.AwayGames}, Byes={team.Byes}, Total={team.HomeGames + team.AwayGames + team.Byes}");
+                log($"{team.Name}: Home={team.HomeGames}, Away={team.AwayGames}, Byes={team.Byes}, Total={team.HomeGames + team.AwayGames + team.Byes}");
+            }
+
+            // Games and Byes count by Week and Division
+            log("\n=== GAMES AND BYES BY WEEK AND DIVISION ===");
+            
+            var divisions = teams.Select(t => t.Division).Distinct().OrderBy(d => d).ToList();
+            var weeks = schedule.Select(g => g.WeekNumber).Distinct().OrderBy(w => w).ToList();
+            
+            foreach (var week in weeks)
+            {
+                log($"\nWeek {week}:");
+                foreach (var division in divisions)
+                {
+                    var games = schedule.Where(g => g.WeekNumber == week && g.AwayTeam != "bye").ToList();
+                    var divisionGames = games.Where(g => 
+                        teams.Any(t => t.Name == g.HostTeam && t.Division == division) ||
+                        teams.Any(t => t.Name == g.AwayTeam && t.Division == division)
+                    ).Count();
+                    
+                    var byes = schedule.Where(g => g.WeekNumber == week && g.AwayTeam == "bye").ToList();
+                    var divisionByes = byes.Where(g => 
+                        teams.Any(t => t.Name == g.HostTeam && t.Division == division)
+                    ).Count();
+                    
+                    log($"  {division}: {divisionGames} games, {divisionByes} byes");
+                }
             }
             
-            Console.WriteLine("\n=== SCHEDULED GAMES ===");
+            log("\n=== SCHEDULED GAMES ===");
             foreach (var game in schedule.OrderBy(g => g.Date).ThenBy(g => g.GameNumber))
             {
-                Console.WriteLine($"Game {game.GameNumber}: {game.HostTeam} vs {game.AwayTeam} on {game.Date:MM/dd/yyyy} (Week {game.WeekNumber})");
+                log($"Game {game.GameNumber}: {game.HostTeam} vs {game.AwayTeam} on {game.Date:MM/dd/yyyy} (Week {game.WeekNumber})");
             }
+            
+
         }
 
     }

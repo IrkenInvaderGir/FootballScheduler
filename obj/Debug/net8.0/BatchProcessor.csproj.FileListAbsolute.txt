@@ -12,3 +12,4 @@ C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\obj\Debug\net8.0\r
 C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\obj\Debug\net8.0\BatchProcessor.pdb
 C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\obj\Debug\net8.0\BatchProcessor.genruntimeconfig.cache
 C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\obj\Debug\net8.0\ref\BatchProcessor.dll
+C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\obj\Debug\net8.0\BatchProcessor.sourcelink.json
