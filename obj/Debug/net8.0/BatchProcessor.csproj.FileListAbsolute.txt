@@ -13,3 +13,18 @@ C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\obj\Debug\net8.0\B
 C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\obj\Debug\net8.0\BatchProcessor.genruntimeconfig.cache
 C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\obj\Debug\net8.0\ref\BatchProcessor.dll
 C:\Users\martin_s\OneDrive - Colony Brands\Personal\Scheduler\obj\Debug\net8.0\BatchProcessor.sourcelink.json
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\bin\Debug\net8.0\BatchProcessor.exe
+c:\Users\scott\Documents\CodeProjects\FootballScheduler\bin\Debug\net8.0\BatchProcessor.deps.json
+c:\Users\scott\Documents\CodeProjects\FootballScheduler\bin\Debug\net8.0\BatchProcessor.runtimeconfig.json
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\bin\Debug\net8.0\BatchProcessor.dll
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\bin\Debug\net8.0\BatchProcessor.pdb
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\BatchProcessor.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\BatchProcessor.AssemblyInfoInputs.cache
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\BatchProcessor.AssemblyInfo.cs
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\BatchProcessor.csproj.CoreCompileInputs.cache
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\BatchProcessor.sourcelink.json
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\BatchProcessor.dll
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\refint\BatchProcessor.dll
+C:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\BatchProcessor.pdb
+c:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\BatchProcessor.genruntimeconfig.cache
+c:\Users\scott\Documents\CodeProjects\FootballScheduler\obj\Debug\net8.0\ref\BatchProcessor.dll
