@@ -15,17 +15,25 @@ namespace BatchProcessor
         const int MaxAwayGames = 4;
         const int HomeGameSoftMinimum = 3; // soft rule, applies to every team including Sauk Prairie
         const int SunPrairieRivalryWeek = 3;
-        const int AttemptCount = 60; // best-of-N: the greedy pass has meaningful run-to-run variance from random tiebreaks
+        const int AttemptCount = 20; // best-of-N: each attempt runs a real backtracking search, so this is far fewer than the old flat-greedy-pass count of 60, but each attempt does much more work per try
+        const int MaxBacktracks = 20000; // per-attempt search budget; falls back to the best-scored schedule seen if exhausted before a perfect solution is found. Measured: raising this well past 20,000 (60,000, 150,000) didn't improve quality further, just cost more time - the stronger IsTeamStillFeasible pruning is what mattered, not extra raw depth
+        const int MaxCandidatesPerSlot = 20; // caps branching factor per decision node - the ordering already puts the best options first, so this trims the long tail rather than the ones actually likely to matter
         static readonly DateTime VeronaJamboreeDate = new DateTime(2026, 8, 22);
 
         // Verona asked for a better home/away balance than the last two years - small
         // priority nudge only, not a hard rule.
         static readonly HashSet<string> SchoolsPreferMoreHomeGames = new() { "Verona" };
 
-        // No field lights, per their own survey submissions - prefer hosting earlier
-        // in the season (more daylight) over the last couple weeks of October.
-        static readonly HashSet<string> SchoolsAvoidLateHosting = new() { "Mt Horeb", "Oregon" };
-        const int LateSeasonStartWeek = 7; // weeks 7-8 are "late"; 1-6 are fine
+        // No field lights, per their own survey submissions - prefer hosting earlier in
+        // the season (more daylight) over the final weeks of October. "Late" starts at a
+        // different week per school: Oregon still avoids weeks 7-8, but Mt Horeb's week 7
+        // hosting capacity was reopened as a normal option (not just a last resort), so
+        // only week 8 counts as "late" for them now.
+        static readonly Dictionary<string, int> SchoolsAvoidLateHostingFromWeek = new()
+        {
+            { "Mt Horeb", 8 },
+            { "Oregon", 7 },
+        };
 
         // Holds all shared scheduling state so methods don't need long, easily-mismatched
         // parameter lists (a real source of bugs in the 2025 version of this file).
@@ -46,6 +54,40 @@ namespace BatchProcessor
             // relaxation pass for teams still short of the game target after the normal
             // passes and the first swap-repair pass.
             public bool AllowSoftPreferenceOverride = false;
+        }
+
+        // A single candidate placement for a site's next open decision, used by the
+        // backtracking tree search (see RunTreeSearchAssignment). Either a mandatory-pair
+        // combo (HostB/AwayB also set), a single general matchup, or the "give up on this
+        // site" fallback (Host == null) that every site's candidate list ends with.
+        private class SiteCandidate
+        {
+            public Team? Host;
+            public Team? Away;
+            public Team? HostB;
+            public Team? AwayB;
+            public bool IsAbandon => Host == null;
+            public bool IsPair => HostB != null;
+        }
+
+        // A cheap, self-contained copy of the schedule state, used by the tree search to
+        // remember the best-scoring arrangement found so far so it can be restored if the
+        // search budget runs out before (or instead of) finding a perfect solution.
+        private class ScheduleSnapshot
+        {
+            public List<Schedule> Games = new();
+            public Dictionary<string, (int Home, int Away)> TeamCounts = new();
+        }
+
+        private class BestTracker
+        {
+            public (int underScheduled, int belowHomeMin, int totalGames) Score = (int.MaxValue, int.MaxValue, -1);
+            public ScheduleSnapshot? Snapshot;
+        }
+
+        private class SearchBudget
+        {
+            public int Remaining;
         }
 
         static void Main(string[] args)
@@ -224,8 +266,7 @@ namespace BatchProcessor
 
             ScheduleVeronaJamboree(ctx);
             ScheduleSunPrairieRivalry(ctx);
-            RunPriorityAssignmentPasses(ctx);
-            RunGeneralAssignmentPasses(ctx);
+            RunTreeSearchAssignment(ctx);
             RunSwapRepairPasses(ctx, allowOverride: false);
             RelaxSoftPreferencesForStillShortTeams(ctx);
             RunSwapRepairPasses(ctx, allowOverride: true);
@@ -387,6 +428,13 @@ namespace BatchProcessor
                     u.Division == shortTeam.Division &&
                     u.Name != shortTeam.Name &&
                     (u.School != shortTeam.School || SameSchoolAllowed(u.School, shortTeam.School)) &&
+                    // When shortTeam is going away (!asHost), u must actually belong to
+                    // site.School - u is the one who'd be hosting shortTeam there. Without
+                    // this, RecordGame below would record u as "hosting" at a site that
+                    // isn't theirs, while RemoveGame/AddGameBack look the site up by u's
+                    // real school on revert - silently mutating a completely different
+                    // site's SlotsUsed and leaving both sites' counts corrupted.
+                    (asHost || u.School == site.School) &&
                     !HasPlayedEachOther(ctx, shortTeam.Name, u.Name) &&
                     IsAvailableOn(ctx, u, site.Date) &&
                     (asHost ? u.AwayGames < MaxAwayGames : u.HomeGames < MaxHomeGames) &&
@@ -582,72 +630,261 @@ namespace BatchProcessor
         }
 
         // ------------------------------------------------------------------
-        // Priority assignment: shared-coaching-staff schools (Beaver Dam, Waunakee,
-        // Middleton, Sun Pr East) face the tightest combination of constraints in the
-        // league - narrow availability plus the must-stay-together rule - so they're
-        // consistently the ones left short once every other, more flexible school has
-        // already claimed the same shared pool of opponents. Giving them first crack at
-        // the season's opponent pool, before general assignment opens it up to
-        // everyone, means they're not competing for an already-picked-over set of
-        // matchups. Same multi-pass structure as general assignment, just scoped to
-        // these schools' own sites first; general assignment still covers them again
-        // afterward for anything left unfilled.
+        // Tree-search assignment: replaces the old two-phase greedy construction
+        // (priority pass + general pass) with a real backtracking search. The greedy
+        // passes only ever added games forward - once a site was decided, that decision
+        // was never revisited except by swap-repair's narrow "steal one opponent"
+        // heuristic. This instead explores the decision tree properly: when a choice
+        // leads to a dead end later, undo it and try the next-best alternative.
+        //
+        // Site order is precomputed once, cheaply, rather than recomputed live at every
+        // decision node (a true most-remaining-values rescan of every open site per node
+        // was tried first and measured far too slow - each rescan meant fully generating
+        // every site's candidate list, most of which get thrown away immediately). The
+        // precomputed order still front-loads the schools known to be tightest
+        // (shared-coaching-staff schools, then by away-availability scarcity) so it
+        // approximates most-constrained-first without paying to reconfirm it every node.
+        // Forward-checking pruning (fail a branch immediately once a team becomes
+        // mathematically doomed) and a backtrack budget with a best-seen-schedule
+        // fallback still apply, same as originally designed.
         // ------------------------------------------------------------------
-        static void RunPriorityAssignmentPasses(SchedulingContext ctx)
+        static void RunTreeSearchAssignment(SchedulingContext ctx)
         {
-            var prioritySchools = new HashSet<string>(ctx.Teams.Where(t => t.SharedCoachingStaff).Select(t => t.School));
-            if (!prioritySchools.Any())
-                return;
+            var orderedSites = ctx.Sites.Where(s => s.Grade == null && s.WeekNumber <= 8)
+                .OrderByDescending(s => ctx.Teams.Any(t => t.School == s.School && t.SharedCoachingStaff))
+                .ThenBy(s => ctx.Teams.Where(t => t.School == s.School).Select(t => (int?)AwayAvailabilityScarcity(ctx, t)).DefaultIfEmpty(int.MaxValue).Min())
+                .ThenBy(s => s.Date)
+                .ThenBy(s => ctx.Random.Next())
+                .ToList();
 
-            const int maxPasses = 8;
-            var prioritySites = ctx.Sites.Where(s => s.Grade == null && s.WeekNumber <= 8 && prioritySchools.Contains(s.School))
-                .OrderBy(s => s.Date).ThenBy(s => ctx.Random.Next()).ToList();
+            var abandoned = new HashSet<SiteAvailability>();
+            var budget = new SearchBudget { Remaining = MaxBacktracks };
+            var best = new BestTracker();
 
-            for (int pass = 1; pass <= maxPasses; pass++)
-            {
-                bool anyScheduled = false;
-                foreach (var site in prioritySites)
-                {
-                    int before = ctx.Schedule.Count;
-                    TryScheduleSite(ctx, site);
-                    if (ctx.Schedule.Count > before)
-                        anyScheduled = true;
-                }
-                if (!anyScheduled)
-                    break;
-            }
+            bool solvedPerfectly = SearchStep(ctx, orderedSites, 0, abandoned, budget, best);
 
-            ctx.Log($"Priority assignment pass complete: {ctx.Schedule.Count} games scheduled after prioritizing {string.Join(", ", prioritySchools.OrderBy(s => s))}.");
+            if (!solvedPerfectly && best.Snapshot != null && IsBetterScore(best.Score, ScoreAttempt(ctx)))
+                RestoreSnapshot(ctx, best.Snapshot);
+
+            int used = MaxBacktracks - Math.Max(budget.Remaining, 0);
+            ctx.Log(solvedPerfectly
+                ? $"Tree search: every team fully scheduled ({used} backtrack step(s) used)."
+                : $"Tree search: budget exhausted or no perfect solution found - kept the best schedule seen ({CountUnderScheduled(ctx)} team(s) still short, {used} backtrack step(s) used).");
         }
 
-        // ------------------------------------------------------------------
-        // General assignment: repeats over all remaining weeks 1-8 sites until a
-        // full pass makes no progress. This replaces the 2025 code's single greedy
-        // sweep plus its two dead "repair" methods with an actual repair mechanism.
-        // ------------------------------------------------------------------
-        static void RunGeneralAssignmentPasses(SchedulingContext ctx)
+        // Recursive backtracking core, walking the precomputed site order by index. A
+        // site with remaining capacity after one decision is revisited at the same index
+        // before advancing, so multi-slot sites get fully considered. Tries each site's
+        // candidates in priority order (best guess first, "abandon this site" last) and
+        // recurses. Returns true only when a perfect (0 under-scheduled) solution is
+        // reached, in which case every caller up the stack short-circuits without undoing
+        // anything. Otherwise every applied candidate is undone via RemoveGame before
+        // trying the next one, so ctx is always left exactly as found if this returns false.
+        static bool SearchStep(SchedulingContext ctx, List<SiteAvailability> sites, int index, HashSet<SiteAvailability> abandoned, SearchBudget budget, BestTracker best)
         {
-            const int maxPasses = 8;
-            // Random (not alphabetical) tiebreak on same-date sites: an alphabetical
-            // tiebreak systematically favored "Sun Pr East" over "Sun Pr West" every
-            // single week, since they usually have overlapping hostable days.
-            var generalSites = ctx.Sites.Where(s => s.Grade == null && s.WeekNumber <= 8)
-                .OrderBy(s => s.Date).ThenBy(s => ctx.Random.Next()).ToList();
+            if (budget.Remaining <= 0)
+                return false;
 
-            for (int pass = 1; pass <= maxPasses; pass++)
+            if (index >= sites.Count)
             {
-                bool anyScheduled = false;
-                foreach (var site in generalSites)
+                // No more sites to decide - this is a leaf. Record it if it's the
+                // best-scoring arrangement seen so far, and report success only if every
+                // team actually reached the target (nothing left to improve).
+                var score = ScoreAttempt(ctx);
+                if (best.Snapshot == null || IsBetterScore(score, best.Score))
                 {
-                    int before = ctx.Schedule.Count;
-                    TryScheduleSite(ctx, site);
-                    if (ctx.Schedule.Count > before)
-                        anyScheduled = true;
+                    best.Score = score;
+                    best.Snapshot = CaptureSnapshot(ctx);
                 }
-                ctx.Log($"Assignment pass {pass}: schedule now has {ctx.Schedule.Count} games");
-                if (!anyScheduled)
-                    break;
+                return score.underScheduled == 0;
             }
+
+            var site = sites[index];
+            if (abandoned.Contains(site) || !site.HasOpenSlot)
+                return SearchStep(ctx, sites, index + 1, abandoned, budget, best);
+
+            var candidates = GetSiteCandidates(ctx, site);
+
+            foreach (var candidate in candidates)
+            {
+                if (--budget.Remaining <= 0)
+                    return false;
+
+                if (candidate.IsAbandon)
+                {
+                    abandoned.Add(site);
+                    if (SearchStep(ctx, sites, index + 1, abandoned, budget, best))
+                        return true;
+                    abandoned.Remove(site);
+                    continue;
+                }
+
+                var gameA = RecordGame(ctx, candidate.Host!, candidate.Away!, site.Date, site.WeekNumber, site);
+                var gameB = candidate.IsPair
+                    ? RecordGame(ctx, candidate.HostB!, candidate.AwayB!, site.Date, site.WeekNumber, site)
+                    : null;
+
+                bool feasible = IsTeamStillFeasible(ctx, candidate.Host!) && IsTeamStillFeasible(ctx, candidate.Away!)
+                    && (!candidate.IsPair || (IsTeamStillFeasible(ctx, candidate.HostB!) && IsTeamStillFeasible(ctx, candidate.AwayB!)));
+
+                // A site with capacity left after this placement is decided again before
+                // moving on; otherwise advance to the next site in the fixed order.
+                int nextIndex = site.HasOpenSlot ? index : index + 1;
+
+                if (feasible && SearchStep(ctx, sites, nextIndex, abandoned, budget, best))
+                    return true;
+
+                if (gameB != null)
+                    RemoveGame(ctx, gameB);
+                RemoveGame(ctx, gameA);
+            }
+
+            return false;
+        }
+
+        // Builds the ordered candidate list for a site's next open decision: mandatory-
+        // pair combos first (only offered once - SlotsUsed == 0 means nothing has been
+        // placed here yet), then general (host, away) matchups, then the "abandon this
+        // site" fallback every list ends with. Reuses the exact same eligibility rules
+        // and priority ordering as the old greedy path (IsHostEligible, the host-ordering
+        // from the retired TryScheduleOneGame, FindEligibleAwayTeamCandidates) - only the
+        // search strategy around them changed, not the rules themselves.
+        static List<SiteCandidate> GetSiteCandidates(SchedulingContext ctx, SiteAvailability site)
+        {
+            var candidates = new List<SiteCandidate>();
+
+            if (site.SlotsUsed == 0 && site.Capacity >= 2)
+            {
+                foreach (var pair in MandatoryHostPairs.Where(p => p.School == site.School))
+                {
+                    var teamA = ctx.Teams.FirstOrDefault(t => t.Name == pair.TeamA);
+                    var teamB = ctx.Teams.FirstOrDefault(t => t.Name == pair.TeamB);
+                    if (teamA == null || teamB == null) continue;
+                    if (!IsHostEligible(ctx, teamA, site) || !IsHostEligible(ctx, teamB, site)) continue;
+
+                    // Smaller cap than general matchups: this is a cross product (awayA x
+                    // awayB), so even a modest per-side cap keeps the combo count sane.
+                    const int maxPairSide = 8;
+                    foreach (var awayA in FindEligibleAwayTeamCandidates(ctx, teamA, site).Take(maxPairSide))
+                        foreach (var awayB in FindEligibleAwayTeamCandidates(ctx, teamB, site, exclude: awayA).Take(maxPairSide))
+                            candidates.Add(new SiteCandidate { Host = teamA, Away = awayA, HostB = teamB, AwayB = awayB });
+                }
+            }
+
+            var hostCandidates = ctx.Teams.Where(t => t.School == site.School
+                    && !IsInMandatoryHostPair(t.Name)
+                    && IsHostEligible(ctx, t, site))
+                .OrderByDescending(t => HasTeammateHostingHere(ctx, t, site) ? 1 : 0)
+                .ThenByDescending(t => PrefersMoreHomeGames(t) ? 1 : 0)
+                .ThenBy(t => t.HomeGames < HomeGameSoftMinimum ? 0 : 1)
+                .ThenBy(t => t.HomeGames + t.AwayGames)
+                .ThenBy(t => ctx.Random.Next())
+                .ToList();
+
+            foreach (var host in hostCandidates)
+                foreach (var away in FindEligibleAwayTeamCandidates(ctx, host, site).Take(MaxCandidatesPerSlot))
+                    candidates.Add(new SiteCandidate { Host = host, Away = away });
+
+            candidates.Add(new SiteCandidate());
+            return candidates;
+        }
+
+        // Forward-checking: a conservative (never wrongly prunes a still-feasible branch)
+        // check on whether this team could still possibly reach the game target.
+        //
+        // The first version of this only counted distinct opponents left "eligible in the
+        // abstract" (division, no rematch, some room left) - it never checked whether any
+        // of them actually share a playable date with this team. That's exactly the gap
+        // that mattered: a narrow-availability team (Beaver Dam, Tuesday-only) can be
+        // "eligible" against a dozen opponents on paper while very few of them are ever
+        // actually available on a date this team can also play, and the old check had no
+        // way to notice that and prune early. Measured empirically after the first cut of
+        // this search: giving it 7.5x more backtrack budget didn't improve the result,
+        // which is the signature of weak pruning (re-exploring the same doomed subtrees)
+        // rather than insufficient depth - this is the fix for that.
+        //
+        // Still deliberately conservative: it checks date-overlap (both teams have an
+        // able-night on some shared date, across this team's remaining open weeks) but
+        // not exact site capacity, shared-coach conflicts, or streak rules - those are
+        // checked exactly by the real search. This only needs to be a valid necessary
+        // condition, not a full simulation.
+        static bool IsTeamStillFeasible(SchedulingContext ctx, Team team)
+        {
+            int gamesNeeded = GamesPerTeamTarget - (team.HomeGames + team.AwayGames);
+            if (gamesNeeded <= 0)
+                return true;
+
+            var teamAvailability = ctx.Availability.FirstOrDefault(a => a.TeamID == team.TeamID);
+            if (teamAvailability == null)
+                return true; // no availability data to check against - don't prune on missing data
+
+            var openWeekDates = Enumerable.Range(1, 8)
+                .Where(week => !HasPlayedThisWeek(ctx, team.Name, week))
+                .SelectMany(week => ctx.Weeks.Where(w => w.WeekNumber == week).Select(w => w.Date))
+                .Where(date => teamAvailability.IsAvailable(date))
+                .ToList();
+
+            int viableOpponents = 0;
+            foreach (var u in ctx.Teams)
+            {
+                if (viableOpponents >= gamesNeeded)
+                    break; // already proven enough exist - no need to keep counting
+
+                if (u.Division != team.Division || u.Name == team.Name) continue;
+                if (u.School == team.School && !SameSchoolAllowed(u.School, team.School)) continue;
+                if (HasPlayedEachOther(ctx, team.Name, u.Name)) continue;
+                if (u.HomeGames >= MaxHomeGames && u.AwayGames >= MaxAwayGames) continue;
+
+                var uAvailability = ctx.Availability.FirstOrDefault(a => a.TeamID == u.TeamID);
+                if (uAvailability == null) continue;
+
+                if (openWeekDates.Any(d => uAvailability.IsAvailable(d)))
+                    viableOpponents++;
+            }
+
+            return viableOpponents >= gamesNeeded;
+        }
+
+        static ScheduleSnapshot CaptureSnapshot(SchedulingContext ctx)
+        {
+            return new ScheduleSnapshot
+            {
+                Games = ctx.Schedule.Select(g => new Schedule
+                {
+                    GameNumber = g.GameNumber,
+                    HostTeam = g.HostTeam,
+                    AwayTeam = g.AwayTeam,
+                    Date = g.Date,
+                    WeekNumber = g.WeekNumber
+                }).ToList(),
+                TeamCounts = ctx.Teams.ToDictionary(t => t.Name, t => (t.HomeGames, t.AwayGames))
+            };
+        }
+
+        // Restores a captured snapshot as ctx's live schedule, including recomputing
+        // every site's SlotsUsed from scratch (rather than trusting whatever state the
+        // search's unwinding left it in) so the rest of the pipeline - swap repair, the
+        // late-hosting relaxation pass, bye assignment - sees a fully consistent ctx.
+        static void RestoreSnapshot(SchedulingContext ctx, ScheduleSnapshot snapshot)
+        {
+            ctx.Schedule.Clear();
+            ctx.Schedule.AddRange(snapshot.Games);
+
+            foreach (var team in ctx.Teams)
+            {
+                var (home, away) = snapshot.TeamCounts[team.Name];
+                team.HomeGames = home;
+                team.AwayGames = away;
+            }
+
+            // Grade-specific site rows only exist for the Verona Jamboree (one row for
+            // 7th, one for 8th, sharing the same date) - without the Grade check here,
+            // a grade-8 game would also get counted against the grade-7 row's capacity
+            // and vice versa, double-counting on that one date.
+            foreach (var site in ctx.Sites)
+                site.SlotsUsed = ctx.Schedule.Count(g => g.AwayTeam != ByeMarker && g.Date == site.Date
+                    && ctx.Teams.First(t => t.Name == g.HostTeam).School == site.School
+                    && (site.Grade == null || ctx.Teams.First(t => t.Name == g.HostTeam).Division == site.Grade));
         }
 
         // Schools where hosting must happen in a fixed pair - both teams host together
@@ -688,7 +925,7 @@ namespace BatchProcessor
             => t.HomeGames < MaxHomeGames
                 && (t.HomeGames + t.AwayGames) < GamesPerTeamTarget
                 && !IsTeamBusy(ctx, t.Name, site)
-                && (ctx.AllowSoftPreferenceOverride || site.WeekNumber < LateSeasonStartWeek || !SchoolsAvoidLateHosting.Contains(t.School))
+                && (ctx.AllowSoftPreferenceOverride || !SchoolsAvoidLateHostingFromWeek.TryGetValue(t.School, out var lateStartWeek) || site.WeekNumber < lateStartWeek)
                 && !HasSharedCoachConflict(ctx, t, site.Date, site.School)
                 && !WouldCreateGameTypeStreak(ctx, t, site.WeekNumber, asHost: true);
 
@@ -760,6 +997,13 @@ namespace BatchProcessor
         }
 
         static Team? FindEligibleAwayTeam(SchedulingContext ctx, Team host, SiteAvailability site, Team? exclude = null)
+            => FindEligibleAwayTeamCandidates(ctx, host, site, exclude).FirstOrDefault();
+
+        // List-returning version of the above, used by the tree search (GetSiteCandidates)
+        // so backtracking can try the 2nd, 3rd, ... option after a later dead end, not
+        // just the single greedy pick. Same rules and ordering as before - only callers
+        // that need more than the top choice are new.
+        static List<Team> FindEligibleAwayTeamCandidates(SchedulingContext ctx, Team host, SiteAvailability site, Team? exclude = null)
         {
             return ctx.Teams.Where(t =>
                     t.Division == host.Division &&
@@ -785,7 +1029,7 @@ namespace BatchProcessor
                 .ThenBy(t => t.HomeGames + t.AwayGames)
                 .ThenByDescending(t => IsPreferredOn(ctx, t, site.Date) ? 1 : 0)
                 .ThenBy(t => ctx.Random.Next())
-                .FirstOrDefault();
+                .ToList();
         }
 
         // ------------------------------------------------------------------
